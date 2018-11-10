@@ -18,4 +18,3 @@ yt = @(x) 5*t * (0.2969 * sqrt(x) - ...
 %% Solver
 
 %% Plots
-ededededededed
