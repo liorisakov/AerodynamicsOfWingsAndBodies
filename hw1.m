@@ -16,7 +16,7 @@ airfoil.xx = 12;     % last two NACA airfoil digits
 xs_offset = 1e-3;    % forward offset of start of doublet line from origin
 xf_offset = 1e-3;    % backward offset of end of doublet line from cord end
 airfoil.N = 100;     % number of doublet line sections
-U_oo = 1;            % horizontal uniform flow speed
+U_oo =100;            % horizontal uniform flow speed
 
 % calculated parameters
 airfoil.t = airfoil.xx/100;            % max thickness as fraction of cord
