@@ -61,13 +61,32 @@ v_eq = @(x, y) - U_oo * ...
 % pressure coefficient
 Cp_eq = @(u, v) 1 - (u.^2 + v.^2)./U_oo^2;
 
-%% Plots
+%% Results
 % plot parameters
 lw = 1.2;    % line width
 fs = 15;     % font size
 ms = 7;      % marker size
 load('colors.mat')
 
+% comparison with Abbot & von Doenhoff
+load('NACA_0012_data.mat', 'table_data')
+for i = 1:length(table_data.x)
+    u_comparison(i) = u_eq(table_data.x(i), airfoil.Y(table_data.x(i)));
+    v_comparison(i) = v_eq(table_data.x(i), airfoil.Y(table_data.x(i)));
+end
+Cp_comparison = Cp_eq(u_comparison, v_comparison);
+V_comparison = sqrt(u_comparison.^2 + v_comparison.^2);
+Cp_error = abs(1 - Cp_comparison - table_data.one_minus_Cp) ./ ...
+           table_data.one_minus_Cp;
+V_error = abs(V_comparison - table_data.V)./table_data.V;
+T = table(table_data.x.', ...
+          table_data.one_minus_Cp.', Cp_comparison.', Cp_error.', ...
+          table_data.V.', V_comparison.', V_error.', ...
+          'VariableNames', {'x', ...
+          'V2_Uoo2_Abbot', 'V2_Uoo2_calculation', 'V2_Uoo2_error', ...
+          'V_Uoo_Abbott', 'V_Uoo_calculation', 'V_Uoo_error'});
+writetable(T, 'Abbot & von Doenhoff comparison.xlsx')
+      
 % plotted results
 x_plot = linspace(1e-3, 1, 400);
 x_surf = linspace(-0.5, 1.5, 400);
@@ -235,4 +254,3 @@ plots.geometry = plot([geometry_x, fliplr(geometry_x)], ...
                       [geometry_y, -fliplr(geometry_y)], ...
                       'LineWidth', lw, 'Color', colors.blue);
 end
-
