@@ -19,7 +19,7 @@ airfoil.N = 100;     % number of doublet line sections
 U_oo = 100;          % horizontal uniform flow speed
 
 % calculated parameters
-airfoil.t = airfoil.xx/100;            % max thickness as fraction of cord
+airfoil.t = airfoil.xx/100;    % max thickness as fraction of cord
 doublet.xs = xs_offset;        % start of doublet line
 doublet.xf = 1 - xf_offset;    % end of doublet line
 
@@ -64,7 +64,7 @@ Cp_eq = @(u, v) 1 - (u.^2 + v.^2)./U_oo^2;
 %% Results
 % plot parameters
 lw_l = 1.2;    % large line width
-lw_s = 0.9;      % small line width
+lw_s = 0.9;    % small line width
 fs = 15;       % font size
 ms = 7;        % marker size
 load('colors.mat')
@@ -136,7 +136,6 @@ hold off
 % FIGURES 2-3: u flow component
 figure
 hold on
-% surf(X_grid, Y_grid, u/U_oo, 'LineStyle', 'none', 'FaceColor', 'interp')
 contour(X_grid, Y_grid, u/U_oo, 300, 'LineWidth', lw_s)
 plot_NACA_00xx(airfoil, doublet);
 title('Flow component: $\frac{u}{U_\infty}$', 'FontSize', fs)
@@ -164,7 +163,6 @@ hold off
 % FIGURES 4-5: v flow component
 figure
 hold on
-% surf(X_grid, Y_grid, v/U_oo, 'LineStyle', 'none', 'FaceColor', 'interp')
 contour(X_grid, Y_grid, v/U_oo, 300, 'LineWidth', lw_s)
 plot_NACA_00xx(airfoil, doublet);
 title('Flow component: $\frac{v}{U_\infty}$', 'FontSize', fs)
