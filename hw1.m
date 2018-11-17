@@ -16,7 +16,7 @@ airfoil.xx = 12;     % last two NACA airfoil digits
 xs_offset = 1e-3;    % forward offset of start of doublet line from origin
 xf_offset = 1e-3;    % backward offset of end of doublet line from cord end
 airfoil.N = 100;     % number of doublet line sections
-U_oo = 1;            % horizontal uniform flow speed
+U_oo = 100;          % horizontal uniform flow speed
 
 % calculated parameters
 airfoil.t = airfoil.xx/100;            % max thickness as fraction of cord
@@ -63,9 +63,10 @@ Cp_eq = @(u, v) 1 - (u.^2 + v.^2)./U_oo^2;
 
 %% Results
 % plot parameters
-lw = 1.2;    % line width
-fs = 15;     % font size
-ms = 7;      % marker size
+lw_l = 1.2;    % large line width
+lw_s = 0.9;      % small line width
+fs = 15;       % font size
+ms = 7;        % marker size
 load('colors.mat')
 
 % comparison with Abbot & von Doenhoff
@@ -75,16 +76,17 @@ for i = 1:length(table_data.x)
     v_comparison(i) = v_eq(table_data.x(i), airfoil.Y(table_data.x(i)));
 end
 Cp_comparison = Cp_eq(u_comparison, v_comparison);
-V_comparison = sqrt(u_comparison.^2 + v_comparison.^2);
+V = sqrt(u_comparison.^2 + v_comparison.^2);
+V_comparison = V/U_oo;
 Cp_error = abs(1 - Cp_comparison - table_data.one_minus_Cp) ./ ...
            table_data.one_minus_Cp;
 V_error = abs(V_comparison - table_data.V)./table_data.V;
-T = table(table_data.x.', ...
-          table_data.one_minus_Cp.', Cp_comparison.', Cp_error.', ...
+T = table(table_data.x.', u_comparison.', v_comparison.', V.', Cp_comparison.', ...
+          table_data.one_minus_Cp.', (1 - Cp_comparison).', Cp_error.', ...
           table_data.V.', V_comparison.', V_error.', ...
-          'VariableNames', {'x', ...
-          'V2_Uoo2_Abbot', 'V2_Uoo2_calculation', 'V2_Uoo2_error', ...
-          'V_Uoo_Abbott', 'V_Uoo_calculation', 'V_Uoo_error'});
+          'VariableNames', {'x', 'u', 'v', 'V', 'Cp', ...
+          'one_minus_Cp_Abbot', 'one_minus_Cp_calculation', 'one_minus_Cp_error', ...
+          'normalized_V_Abbott', 'normalized_V_calculation', 'normalized_V_error'});
 writetable(T, 'Abbot & von Doenhoff comparison.xlsx')
       
 % plotted results
@@ -134,12 +136,13 @@ hold off
 % FIGURES 2-3: u flow component
 figure
 hold on
-surf(X_grid, Y_grid, u/U_oo, 'LineStyle', 'none', 'FaceColor', 'interp')
+% surf(X_grid, Y_grid, u/U_oo, 'LineStyle', 'none', 'FaceColor', 'interp')
+contour(X_grid, Y_grid, u/U_oo, 300, 'LineWidth', lw_s)
 plot_NACA_00xx(airfoil, doublet);
 title('Flow component: $\frac{u}{U_\infty}$', 'FontSize', fs)
 xlabel('$\frac{x}{c}$', 'FontSize', fs)
 ylabel('$\frac{y}{c}$', 'FontSize', fs)
-view(2)
+view([0, 0, -1])
 colorbar
 axis image
 hold off
@@ -147,7 +150,7 @@ hold off
 figure
 hold on
 plot_NACA_00xx(airfoil, doublet);
-plot(x_plot, u_plus/U_oo, 'LineWidth', lw, 'Color', colors.red)
+plot(x_plot, u_plus/U_oo, 'LineWidth', lw_l, 'Color', colors.red)
 title('Horizontal flow component along upper surface', 'FontSize', fs)
 xlabel('$\frac{x}{c}$', 'FontSize', fs)
 ylabel('$\frac{u}{U_{\infty}}$', 'FontSize', fs)
@@ -161,12 +164,13 @@ hold off
 % FIGURES 4-5: v flow component
 figure
 hold on
-surf(X_grid, Y_grid, v/U_oo, 'LineStyle', 'none', 'FaceColor', 'interp')
+% surf(X_grid, Y_grid, v/U_oo, 'LineStyle', 'none', 'FaceColor', 'interp')
+contour(X_grid, Y_grid, v/U_oo, 300, 'LineWidth', lw_s)
 plot_NACA_00xx(airfoil, doublet);
 title('Flow component: $\frac{v}{U_\infty}$', 'FontSize', fs)
 xlabel('$\frac{x}{c}$', 'FontSize', fs)
 ylabel('$\frac{y}{c}$', 'FontSize', fs)
-view(2)
+view([0, 0, -1])
 colorbar
 axis image
 hold off
@@ -174,7 +178,7 @@ hold off
 figure
 hold on
 plot_NACA_00xx(airfoil, doublet);
-plot(x_plot, v_plus/U_oo, 'LineWidth', lw, 'Color', colors.red)
+plot(x_plot, v_plus/U_oo, 'LineWidth', lw_l, 'Color', colors.red)
 title('Vertical flow component along upper surface', 'FontSize', fs)
 xlabel('$\frac{x}{c}$', 'FontSize', fs)
 ylabel('$\frac{v}{U_{\infty}}$', 'FontSize', fs)
@@ -188,12 +192,13 @@ hold off
 % FIGUREs 5-6: pressure coefficient 
 figure
 hold on
-surf(X_grid, Y_grid, Cp, 'LineStyle', 'none', 'FaceColor', 'interp')
+% surf(X_grid, Y_grid, Cp, 'LineStyle', 'none', 'FaceColor', 'interp')
+contour(X_grid, Y_grid, Cp, 300, 'LineWidth', lw_s)
 plot_NACA_00xx(airfoil, doublet);
 title('Pressure coefficient', 'FontSize', fs)
 xlabel('$\frac{x}{c}$', 'FontSize', fs)
 ylabel('$\frac{y}{c}$', 'FontSize', fs)
-view(2)
+view([0, 0, -1])
 colorbar
 axis image
 hold off
@@ -201,10 +206,10 @@ hold off
 figure
 hold on
 plot_NACA_00xx(airfoil, doublet);
-plot(x_plot, 1 - Cp_plus, 'LineWidth', lw, 'Color', colors.red)
+plot(x_plot, 1 - Cp_plus, 'LineWidth', lw_l, 'Color', colors.red)
 title('Pressure coefficient along upper surface', 'FontSize', fs)
 xlabel('$\frac{x}{c}$', 'FontSize', fs)
-ylabel('$\frac{u^2+v^2}{U_{\infty}^2}$', 'FontSize', fs)
+ylabel('$\frac{u^2+v^2}{U_{\infty}^2}=1-C_p$', 'FontSize', fs)
 axis image
 axis manual
 y_limits = ylim;
@@ -227,6 +232,27 @@ ylabel('$\frac{y}{c}$', 'FontSize', fs)
 xlim([min(min(X_grid)), max(max(X_grid))]);
 ylim([min(min(Y_grid)), max(max(Y_grid))]);
 axis image
+grid on
+hold off
+
+% FIGURE 8: error plots
+figure
+hold on
+plot_NACA_00xx(airfoil, doublet);
+title('Absolute error compared to Abbot \& Doenhoff', 'FontSize', fs)
+xlabel('$\frac{x}{c}$', 'FontSize', fs)
+ylabel('Error $[\%]$', 'FontSize', fs)
+h(1) = plot(table_data.x, 100*V_error, ...
+            'LineWidth', lw_l, 'Color', colors.blue);
+h(2) = plot(table_data.x, 100*Cp_error, ...
+            'LineWidth', lw_l, 'Color', colors.red);
+legend(h, ...
+       '$\frac{\sqrt{u^2+v^2}}{U_\infty}$', ...
+       '$\frac{u^2+v^2}{U_\infty^2}=1-C_p$', ...
+       'Location', 'NorthEast')
+axis image
+y_limits = ylim;
+ylim([y_limits(1), 1.5])
 grid on
 hold off
 
