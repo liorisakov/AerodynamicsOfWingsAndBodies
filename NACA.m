@@ -10,6 +10,9 @@ classdef NACA < handle
         xL
         yU
         yL
+        
+        yU_func
+        yL_func
     end
     
     methods
@@ -31,7 +34,7 @@ classdef NACA < handle
         obj.p = second_digit/10;    % max camber location
         obj.t = last_digits/100;    % max thickness as fraction of cord
         
-        obj.generate_geometry();
+        [obj.yU, obj.yL, obj.xU, obj.xL] = obj.generate_geometry();
         end
         
         
@@ -71,23 +74,10 @@ classdef NACA < handle
         end
         
         
-        function plot_self(obj)
-            load('colors.mat', 'colors')
-
-            hold on
-            patch([obj.xU, fliplr(obj.xL)], [obj.yU, fliplr(obj.yL)], ...
-                  colors.blue, 'FaceAlpha', 0.2)
-            plot([obj.xU, fliplr(obj.xL)], [obj.yU, fliplr(obj.yL)], ...
-                 'LineWidth', 1.2, 'Color', colors.blue); 
-            
-            axis equal
-        end
-
-    end
-        
-    methods (Access = private)
-        function generate_geometry(obj)
-            x = linspace(0, 1, 200);
+        function [yU, yL, xU, xL] = generate_geometry(obj, x)
+            if nargin == 1
+                x = linspace(0, 1, 200);
+            end
             
             % geometry properties
             yt = obj.thickness(x);
@@ -96,10 +86,31 @@ classdef NACA < handle
             
             % geometry
             theta = atan(dyc_dx);
-            obj.xU = x - yt.*sin(theta);
-            obj.xL = x + yt.*sin(theta);
-            obj.yU = yc + yt.*cos(theta);
-            obj.yL = yc - yt.*cos(theta);
+            xU = x - yt.*sin(theta);
+            xL = x + yt.*sin(theta);
+            yU = yc + yt.*cos(theta);
+            yL = yc - yt.*cos(theta);
         end
+        
+        
+        function plot_self(obj, transparent)
+            if nargin == 1
+                transparent = false;
+            end
+            load('colors.mat', 'colors')
+
+            hold on
+            if ~transparent
+                patch([obj.xU, fliplr(obj.xL)], [obj.yU, fliplr(obj.yL)], ...
+                  white(1))
+            end
+            patch([obj.xU, fliplr(obj.xL)], [obj.yU, fliplr(obj.yL)], ...
+                  colors.blue, 'FaceAlpha', 0.2)
+            plot([obj.xU, fliplr(obj.xL)], [obj.yU, fliplr(obj.yL)], ...
+                 'LineWidth', 1.2, 'Color', colors.blue); 
+            
+            axis equal
+        end
+
     end
 end
