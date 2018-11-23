@@ -93,7 +93,7 @@ classdef NACA < handle
         end
         
         
-        function plot_self(obj, transparent)
+        function handle = plot_self(obj, transparent)
             if nargin == 1
                 transparent = false;
             end
@@ -106,8 +106,20 @@ classdef NACA < handle
             end
             patch([obj.xU, fliplr(obj.xL)], [obj.yU, fliplr(obj.yL)], ...
                   colors.blue, 'FaceAlpha', 0.2)
-            plot([obj.xU, fliplr(obj.xL)], [obj.yU, fliplr(obj.yL)], ...
-                 'LineWidth', 1.2, 'Color', colors.blue); 
+            handle = plot([obj.xU, fliplr(obj.xL)], ...
+                          [obj.yU, fliplr(obj.yL)], ...
+                          'LineWidth', 1.2, 'Color', colors.blue); 
+            
+            axis equal
+        end
+        
+        
+        function plot_camber(obj)
+            load('colors.mat', 'colors')
+            x = linspace(0, 1, 200);
+            
+            yc = camber_line(obj, x);
+            plot(x, yc, 'LineWidth', 1.2, 'Color', colors.red); 
             
             axis equal
         end

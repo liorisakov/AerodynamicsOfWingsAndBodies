@@ -12,16 +12,17 @@ clear variables
 
 %% Parameters
 % user input
-airfoil = NACA('2412');
+digits = 2412;         % NACA airfoil four-digit designation
 N = 50;                % number of vortex line vortices
-U_oo = 100;            % [m/s] - uniform flow speed
+U_oo = 50;             % [m/s] - uniform flow speed
 rho = 1.225;           % [kg/m^3] - air density (chosen as ISA at sea level)
 alpha = deg2rad(8);    % [rad] - angle of attack
 
 % calculated parameters
+airfoil = NACA(num2str(digits));    % airfoil object
+q_oo = 1/2*rho*U_oo^2;      % uniform flow dynamic pressure
 x = linspace(0, 1, N+2);    % vortex line sectioning; extra two points as
                             % LE and TE points don't have vortices
-
 
 %% Airfoil
 % vortex line definition
@@ -37,9 +38,9 @@ zj = airfoil.camber_line(vortex.t);          % z coordinate of vortex points
 % parameters
 xi = vortex.p;    % x coordinate of control points
 xj = vortex.t;    % x coordinate of vortex points
-delta2 = atan((zi-zj)./(xi-xj));    % angles from vortices to control points
-delta3 = delta2 - atan(dz_dx);      % angles between velocities induced by
-                                    % vortices and local camber line normal
+delta2 = atan((zi - zj)./(xi - xj));    % angles from vortices to control points
+delta3 = delta2 - atan(dz_dx);    % angles between velocities induced by
+                                  % vortices and local camber line normal
 
 % solve A*mj = b
 A = 1/(2*pi) * cos(delta2).*cos(delta3)./(xi - xj);
@@ -48,7 +49,7 @@ vortex.Gamma = (A\b).';    % resuling magnitudes of vortices
 
 %% Aerodynamic equations
 % flow components
-r_func = @(x, y) sqrt((x - xj).^2 + (y - zj).^2);    % distance to all vortices
+r_func = @(x, y) sqrt((x - xj).^2 + (y - zj).^2);    % distances to all vortices
 v_theta_func = @(x, y) - 1./(2*pi*r_func(x, y)) .* vortex.Gamma;
 u_func = @(x, y) cos(alpha)*U_oo + ...
                  sum((cos(acos((x - xj)./r_func(x, y)) + pi/2) .* ...
@@ -59,8 +60,38 @@ v_func = @(x, y) sin(alpha)*U_oo + ...
 
 % pressure coefficient
 Delta_x = xj(2) - xj(1);
-Delta_Cp = 2*vortex.Gamma/(U_oo*Delta_x);
+Delta_Cp = rho*U_oo*vortex.Gamma/(q_oo*Delta_x);
 Cp_func = @(u, v) 1 - (u.^2 + v.^2)./U_oo^2;
+
+% lift and moment coefficients
+L_prime = rho*U_oo*sum(vortex.Gamma);
+Cl = 2*sum(vortex.Gamma)/U_oo;
+Cm_025c = 2*sum(vortex.Gamma.*(0.25 - xj))/U_oo;
+
+%% Numerical results
+% numerical output and Abbot & von Doenhoff comparison
+load('NACA_2412_data.mat', 'abbott_data')
+Cl_err = abs(Cl - abbott_data.Cl)/abbott_data.Cl;
+Cm_025c_err = abs(Cm_025c - abbott_data.Cm_025c)/abbott_data.Cm_025c;
+fprintf('Lift per unit wing span: %.0f [N/m]\n\n', L_prime)
+fprintf('Lift coeffcient:\n')
+fprintf('    Calculated: %.3f\n', Cl)
+fprintf('    Abbott & von Doenhoff: %.3f\n', abbott_data.Cl)
+fprintf('    Absolute error: %.1f%%\n\n', Cl_err*100)
+fprintf('Moment coeffcient about quarter chord:\n')
+fprintf('    Calculated: %.4f\n', Cm_025c)
+fprintf('    Abbott & von Doenhoff: %.4f\n', abbott_data.Cm_025c)
+fprintf('    Absolute error: %.1f%%\n\n', Cm_025c_err*100)
+
+% Kuethe & Chow comparison
+load('NACA_2412_data.mat', 'kuethe_data')
+Delta_Cp_comp = interp1(xj, Delta_Cp, kuethe_data.x, 'pchip');
+Delta_Cp_err = abs(Delta_Cp_comp - kuethe_data.Delta_Cp)./kuethe_data.Delta_Cp;
+T = table(kuethe_data.x.', ...
+          kuethe_data.Delta_Cp.', Delta_Cp_comp.', Delta_Cp_err.', ...
+          'VariableNames', {'x', ...
+          'Delta_Cp_Kuethe', 'Delta_Cp_calculation', 'Delta_Cp_error'});
+writetable(T, 'Kuethe & Chow comparison.xlsx')
 
 %% Plots
 % plot parameters
@@ -68,20 +99,6 @@ lw = 1.2;    % line width
 fs = 15;     % font size
 ms = 7;      % marker size
 load('colors.mat')
-
-
-% figure
-% hold on
-% % airfoil.plot_self()
-% % plot(xi, zi, '.', 'Color', colors.blue)
-% % plot(xj, zj, '- .', 'Color', colors.red)
-% plot(xj, Delta_Cp, '- .', 'Color', colors.blue)
-% % axis image
-% y_limits = ylim;
-% ylim([y_limits(1), 4]);
-% grid on
-% hold off
-
 
 % plotted results
 x_plot = linspace(1e-3, 1, 100);
@@ -111,39 +128,29 @@ for i = 1:length(x_surf)
         end
     end
 end
-% for i = 1:length(x_plot)
-%     u_plus(i) = u_func(x_plot(i), airfoil.yU(x_plot(i)));
-%     v_plus(i) = v_func(x_plot(i), airfoil.yU(x_plot(i)));
-% end
-% Cp_plus = Delta_Cp(u_plus, v_plus);
 
 % FIGURE 1: airfoil geometry and vortex line
 figure
 hold on
-airfoil.plot_self()
-plot(xi, zi, '.', 'Color', colors.yellow)
-plot(xj, zj, '.', 'Color', colors.red)
-% title({sprintf('NACA $00%02d$ airfoil geometry ', airfoil.xx), ...
-%        'and defined vortex line'}, 'FontSize', fs)
+h1 = airfoil.plot_self();
+h2 = plot(xj, zj, '.', 'Color', colors.red);
+h3 = plot(xi, zi, '.', 'Color', colors.yellow);
+title({sprintf('NACA $%d$ airfoil geometry,', digits), ...
+       'vortices and control points'}, 'FontSize', fs)
 xlabel('$\frac{x}{c}$', 'FontSize', fs)
 ylabel('$\frac{y}{c}$', 'FontSize', fs)
-% legend([plots.geometry, plots.vortex], ...
-%        sprintf('NACA $00%02d$ geometry', airfoil.xx), ...
-%        'Doublet line sections', ...
-%        'Location', 'Northeast');
+legend([h1, h2, h3], sprintf('NACA $%d$ geometry', digits), ...
+       'Vortex points', 'Control points', 'Location', 'Northeast');
 axis equal
 grid on
 hold off
 
-% FIGURES 2-3: u flow component
+% FIGURE 2: u flow component
 figure
 hold on
 contour(X_grid, Y_grid, u/U_oo, 300)
 caxis([u_min/U_oo, u_max/U_oo])
-% contour(X_grid, Y_grid, u/U_oo, [1, Inf], 'ShowText', 'on', ...
-%         'LineWidth', lw, 'LineColor', colors.dark_red)
-% surf(X_grid, Y_grid, u/U_oo, 'LineStyle', 'none', 'FaceColor', 'interp')
-airfoil.plot_self()
+airfoil.plot_self();
 title('Flow component: $\frac{u}{U_\infty}$', 'FontSize', fs)
 xlabel('$\frac{x}{c}$', 'FontSize', fs)
 ylabel('$\frac{y}{c}$', 'FontSize', fs)
@@ -152,26 +159,12 @@ colorbar
 axis image
 hold off
 
-% figure
-% hold on
-% airfoil.plot_self()
-% plot(x_plot, u_plus/U_oo, 'LineWidth', lw, 'Color', colors.red)
-% title('Horizontal flow component along upper surface', 'FontSize', fs)
-% xlabel('$\frac{x}{c}$', 'FontSize', fs)
-% ylabel('$\frac{u}{U_{\infty}}$', 'FontSize', fs)
-% axis image
-% axis manual
-% y_limits = ylim;
-% ylim([y_limits(1), 1.4]);
-% grid on
-% hold off
-
-% FIGURES 4-5: v flow component
+% FIGURE 3: v flow component
 figure
 hold on
 contour(X_grid, Y_grid, v/U_oo, 300)
 caxis([v_min/U_oo, v_max/U_oo])
-airfoil.plot_self()
+airfoil.plot_self();
 title('Flow component: $\frac{v}{U_\infty}$', 'FontSize', fs)
 xlabel('$\frac{x}{c}$', 'FontSize', fs)
 ylabel('$\frac{y}{c}$', 'FontSize', fs)
@@ -180,26 +173,12 @@ colorbar
 axis image
 hold off
 
-% figure
-% hold on
-% airfoil.plot_self()
-% plot(x_plot, v_plus/U_oo, 'LineWidth', lw, 'Color', colors.red)
-% title('Vertical flow component along upper surface', 'FontSize', fs)
-% xlabel('$\frac{x}{c}$', 'FontSize', fs)
-% ylabel('$\frac{v}{U_{\infty}}$', 'FontSize', fs)
-% axis image
-% axis manual
-% y_limits = ylim;
-% ylim([y_limits(1), 0.8]);
-% grid on
-% hold off
-
-% FIGUREs 5-6: pressure coefficient 
+% FIGURES 4-5: pressure coefficient 
 figure
 hold on
 contour(X_grid, Y_grid, Cp, 300)
 caxis([Cp_min, Cp_max])
-airfoil.plot_self()
+airfoil.plot_self();
 title('Pressure coefficient', 'FontSize', fs)
 xlabel('$\frac{x}{c}$', 'FontSize', fs)
 ylabel('$\frac{y}{c}$', 'FontSize', fs)
@@ -210,11 +189,15 @@ hold off
 
 figure
 hold on
-plot(xj, Delta_Cp, '.', 'LineWidth', lw, 'MarkerSize', ms)
+plot(xj, Delta_Cp, '- .', 'LineWidth', lw, 'MarkerSize', ms)
+plot(kuethe_data.x, kuethe_data.Delta_Cp, '- .', ...
+     'LineWidth', lw, 'MarkerSize', ms)
 title({'Pressure coefficient difference', 'along camber line'}, ...
       'FontSize', fs)
 xlabel('$\frac{x}{c}$', 'FontSize', fs)
 ylabel('$\Delta C_p$', 'FontSize', fs)
+legend('Calculation', 'Kuethe \& Chow 120 panel data', ...
+       'Location', 'Northeast');
 y_limits = ylim;
 axis([0, 1, y_limits(1), 4]);
 grid on
@@ -222,15 +205,14 @@ hold off
 
 % FIGURE 7: stream lines
 lines = 80;
-starty1 = linspace(min(min(Y_grid)), max(max(Y_grid)), lines);
-% starty2 = linspace(-0.03, 0.1, 4);
-startx1 = min(min(X_grid))*ones(1, lines);
-% startx2 = max(max(X_grid))*ones(1, 4);
+starty = linspace(min(min(Y_grid)), max(max(Y_grid)), lines);
+startx = min(min(X_grid))*ones(1, lines);
 figure
 hold on
-streamline(X_grid.', Y_grid.', u.', v.', startx1, starty1)
-airfoil.plot_self(false)
-% streamline(X_grid.', Y_grid.', -u.', -v.', startx2, starty2)
+streamline(X_grid.', Y_grid.', u.', v.', startx, starty)
+airfoil.plot_self(true);
+airfoil.plot_camber();
+plot(xj, zj, 'Color', colors.red, 'LineWidth', lw)
 title('Stream lines', 'FontSize', fs)
 xlabel('$\frac{x}{c}$', 'FontSize', fs)
 ylabel('$\frac{y}{c}$', 'FontSize', fs)
@@ -239,28 +221,3 @@ ylim([min(min(Y_grid)), max(max(Y_grid))]);
 axis image
 grid on
 hold off
-
-function plots = plot_NACA_00xx(airfoil, vortex, plot_doublet_line)
-% plot parameters
-lw = 1.2;    % line width
-ms = 7;      % marker size
-load('colors.mat')
-
-if nargin == 2
-    plot_doublet_line = false;
-end
-
-geometry_x = linspace(0, 1);
-geometry_y = airfoil.Y(geometry_x);
-
-patch([geometry_x, fliplr(geometry_x)], ...
-      [geometry_y, -fliplr(geometry_y)], ...
-      colors.blue, 'FaceAlpha', 0.2)
-if plot_doublet_line
-    plots.vortex = plot(vortex.tj, zeros(length(vortex.tj), 1), '- .', ...
-                         'LineWidth', lw, 'MarkerSize', ms, 'Color', colors.red);
-end
-plots.geometry = plot([geometry_x, fliplr(geometry_x)], ...
-                      [geometry_y, -fliplr(geometry_y)], ...
-                      'LineWidth', lw, 'Color', colors.blue);
-end
