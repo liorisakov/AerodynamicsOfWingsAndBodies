@@ -192,11 +192,12 @@ hold on
 plot(xj, Delta_Cp, '- .', 'LineWidth', lw, 'MarkerSize', ms)
 plot(kuethe_data.x, kuethe_data.Delta_Cp, '- .', ...
      'LineWidth', lw, 'MarkerSize', ms)
+plot(kuethe_data.x, Delta_Cp_err, 'LineWidth', lw)
 title({'Pressure coefficient difference', 'along camber line'}, ...
       'FontSize', fs)
 xlabel('$\frac{x}{c}$', 'FontSize', fs)
 ylabel('$\Delta C_p$', 'FontSize', fs)
-legend('Calculation', 'Kuethe \& Chow 120 panel data', ...
+legend('Calculation', 'Kuethe \& Chow 120 panel data', 'Relative error', ...
        'Location', 'Northeast');
 y_limits = ylim;
 axis([0, 1, y_limits(1), 4]);
