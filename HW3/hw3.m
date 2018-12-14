@@ -80,8 +80,9 @@ y = linspace(-wing.span/2, wing.span/2);
     wing.AeroCoeffsAtY(y, uoo, 'cl times c', 'cm times c squared');
 [cL, cMApex] = wing.AeroCoeffs(y, uoo);
 cLAlpha = cL/alpha;
-cMAlpha = cMApex/alpha;
-xCP = - cMAlpha/cLAlpha;
+cMApexAlpha = cMApex/alpha;
+xCpNondimensional = - cMApexAlpha/cLAlpha;
+xCp = xCpNondimensional*wing.mac;
 
 % lift and moment about apex
 lPrime = qoo * clTimesC;
@@ -95,8 +96,12 @@ alphaForRequiredCL = 0.5/cLAlpha;
 % mean aerodynamic chord quarter chord x coordinate
 macQuarterChord = wing.macLeadingEdgeX + 0.25*wing.mac;
 
+% xCp as a percentage of mean aerodynamic chord
+xCpMacPercentage = (xCp - wing.macLeadingEdgeX)/wing.mac;
+
 %% Numerical results
-% Kuethe & Chow comparison (for over 20 tiles in the x direction only)
+% Kuethe & Chow comparison at stations along y
+% for over 20 tiles in the x direction only
 if wing.N(1) >= 20
     load('Kuethe and Chow data.mat')
     clComparison = wing.AeroCoeffsAtY(kuethe.yStations, uoo, ...
@@ -119,7 +124,7 @@ if wing.N(1) >= 20
                                 kuethe.deltaCp.station8) ./ ...
                             kuethe.deltaCp.station8;
 
-    % numerical output
+    % table output
     x = linspace(0, 1, 20);
     T = table(x.', kuethe.deltaCp.station2.',  ...
               deltaCpComparison.station2.', deltaCpError.station2.', ...
@@ -142,6 +147,23 @@ if wing.N(1) >= 20
               'deltaCpCalculation', 'deltaCpError'});
     writetable(T, 'Kuethe & Chow comparison.xlsx', 'Sheet', 'Station 8')
 end
+
+% Kuethe % Chow numerical comparison
+fprintf('Results for N = [%d,%d] and alpha = %.3f [deg]:\n\n', ...
+        xTileCount, yTileCount/2, rad2deg(alpha))
+fprintf('Wing geometric properties:\n')
+fprintf('b = %.2f [m]\n', wing.span)
+fprintf('S = %.2f [m^2]\n', wing.area)
+fprintf('AR = %.3f\n', wing.aspectRatio)
+fprintf('MAC = %.3f [m]\n\n', wing.mac)
+fprintf('Aerodynamic coefficients:\n')
+fprintf('cL = %.3f\n', cL)
+fprintf('cM about apex = %.3f\n', cMApex)
+fprintf('cLAlpha = %.3f [1/deg]\n', cLAlpha/(rad2deg(1)))
+fprintf('cMAlpha about apex = %.3f [1/deg]\n\n', cMApexAlpha/(rad2deg(1)))
+fprintf('Center of pressure\n')
+fprintf('xCp = %.3f [m]\n', xCp)
+fprintf('xCp as percentage along MAC = %.1f%%\n\n', xCpMacPercentage*100)
 
 %% Plots
 % plot parameters
@@ -359,3 +381,21 @@ if wing.N(1) == 20    % if there are enough tiles in the x direction
     ylabel('$\Delta C_p$ absolute errors', 'FontSize', fs-4)
     hold off
 end
+
+% FIGURE 8: mean aerodynamic chord and xCp
+figure
+hold on
+grid on
+handles = wing.PlotSelf('MAC');
+handles.xCp = plot(xCp*[1, 1], wing.span/2*[-1, 1], '--', ...
+                   'LineWidth', lw, 'Color', colors.blue);
+title({'$x_{C_p}$ compared to quarter length', ...
+       'of mean aerodynamic chord'}, 'FontSize', fs)
+xlabel('$x\ [m]$', 'FontSize', fs)
+ylabel('$y\ [m]$', 'FontSize', fs)
+legend([handles.mac, handles.quarterMac, handles.xCp], ...
+       'Mean aerodynamic chord', ...
+       'Mean aerodynamic quarter chord', '$x_{C_p}$', ...
+       'Location', 'EastOutside')
+axis image
+hold off

@@ -52,11 +52,24 @@ classdef FlatWing < handle
                              (iPlusOneChords + iChords));
             obj.aspectRatio = obj.span^2/obj.area;
             
-            obj.mac = obj.span/obj.area * ...
-                                       sum(iChords - ...
-                                           iSpans .* ...
-                                           (iPlusOneChords - iChords) ./ ...
-                                           (iPlusOneSpans - iSpans));
+%             obj.mac = obj.span/obj.area * ...
+%                       sum(iChords + (obj.span/4 - iSpans) .* ...
+%                           (iPlusOneChords - iChords) ./ ...
+%                           (iPlusOneSpans - iSpans));
+            li = iChords;
+            lip1 = iPlusOneChords;
+            yi = iSpans;
+            yip1 = iPlusOneSpans;
+            m = (lip1 - li)./(yip1 - yi);
+            s = obj.area;
+            obj.mac = 2/s * ...
+                      sum(li.^2.*yip1 + ...
+                          2*m.*li.*(yip1.^2/2 - yi.*yip1) + ...
+                          m.^2.*(yip1.^3/3 - yi.*yip1.^2 + yi.^2.*yip1) - ...
+                          (li.^2.*yi + ...
+                           2*m.*li.*(yi.^2/2 - yi.*yi) + ...
+                           m.^2.*(yi.^3/3 - yi.*yi.^2 + yi.^2.*yi)));
+                          
             obj.macY = interp1(chordLengths, ...
                                chordLeadingEdges(:,2), obj.mac);
             obj.macLeadingEdgeX = interp1(chordLengths, ...
@@ -184,6 +197,7 @@ classdef FlatWing < handle
             plotTiles = false;
             plotHorseshoes = false;
             plotControlPoints = false;
+            plotMac = false;
             noFill = false;
             for i = 1:length(varargin)
                 if strcmp(varargin{i}, 'rotate')
@@ -198,6 +212,8 @@ classdef FlatWing < handle
                     plotHorseshoes = true;
                 elseif strcmp(varargin{i}, 'control points')
                     plotControlPoints = true;
+                elseif strcmp(varargin{i}, 'MAC')
+                    plotMac = true;
                 elseif strcmp(varargin{i}, 'no fill')
                     noFill = true;
                 end
@@ -205,7 +221,7 @@ classdef FlatWing < handle
             
             % plot parameters
             lw = 1.2;    % line width
-            ms = 7;      % marker size
+            ms = 8;      % marker size
             load('colors.mat', 'colors')
             
             xTileCount = obj.N(1);
@@ -253,6 +269,18 @@ classdef FlatWing < handle
             handles.outline = plot(outlineX + origin(1), ...
                                    outlineY + origin(2), ...
                                    'LineWidth', lw, 'Color', colors.blue);
+            
+            if plotMac
+                macTrailingEdgeX = obj.macLeadingEdgeX + obj.mac;
+                macQuarterX = 3/4*obj.macLeadingEdgeX + ...
+                              1/4*macTrailingEdgeX;
+                handles.mac = plot([obj.macLeadingEdgeX, macTrailingEdgeX], ...
+                                   obj.macY*[1, 1], ...
+                                   'LineWidth', lw, 'Color', colors.red);
+                handles.quarterMac = plot(macQuarterX, obj.macY, ...
+                                          'x', 'LineWidth', lw, ...
+                                          'Color', colors.red);
+            end
         end
         
         
