@@ -16,6 +16,7 @@ load('alpha for required CL.mat')
 
 % user input
 N = [20, 50];          % number of tiles used per side of wing for VLM
+% N = 20;              % uncomment to draw representative geometry
 uoo = 50;              % [m/s] - uniform flow speed
 rho = 1.225;           % [kg/m^3] - air density (chosen as ISA at sea level)
 alpha = alphaForRequiredCL;    % [rad] - angle of attack
@@ -95,8 +96,8 @@ alphaForRequiredCL = 0.5/cLAlpha;
 macQuarterChord = wing.macLeadingEdgeX + 0.25*wing.mac;
 
 %% Numerical results
-% Kuethe & Chow comparison
-if N(1) == 20
+% Kuethe & Chow comparison (for over 20 tiles in the x direction only)
+if wing.N(1) >= 20
     load('Kuethe and Chow data.mat')
     clComparison = wing.AeroCoeffsAtY(kuethe.yStations, uoo, ...
                                       'return separate x values');
@@ -149,7 +150,7 @@ fs = 15;     % font size
 ms = 7;      % marker size
 load('colors.mat')
 
-% FIGURE 1: wing and method geometry (for less than 20 tiles only)
+% FIGURE 1: wing and method geometry (for less than 20 total tiles only)
 if prod(N) <= 20
     figure
     hold on
@@ -170,7 +171,7 @@ if prod(N) <= 20
     hold off
 end
 
-% FIGURE 2: downwash around planar wing (for less than 20 tiles only)
+% FIGURE 2: downwash around planar wing (for less than 20 total tiles only)
 if prod(N) <= 20
     [X, Y] = meshgrid(linspace(-8, 17, 500), linspace(-18, 18, 500));
     w = 0;
@@ -266,7 +267,8 @@ middleY = (max(yTicks) + min(yTicks))/2;
 wing.PlotSelf('rotate', 'normalize', 'origin', [0, middleY]);
 hold off
 
-if N(1) == 20
+% Kuethe & Chow comparison (for over 20 tiles in the x direction only)
+if wing.N(1) == 20    % if there are enough tiles in the x direction
     load('Kuethe and Chow data.mat')
     x = linspace(0, 1, 20);
     y = kuethe.yStations;
