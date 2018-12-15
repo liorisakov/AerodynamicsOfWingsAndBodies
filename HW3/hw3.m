@@ -236,8 +236,8 @@ title({'Lift coefficient of wing section', ...
 xlabel('$\frac{y}{b}$', 'FontSize', fs)
 ylabel('$C_l(y)$', 'FontSize', fs)
 axis image
-yTicks = yticks;
-middleY = (max(yTicks) + min(yTicks))/2;
+yTick = yticks;
+middleY = (max(yTick) + min(yTick))/2;
 wing.PlotSelf('rotate', 'normalize', 'origin', [0, middleY]);
 hold off
 
@@ -252,8 +252,8 @@ title({'Lift coefficient of wing section', ...
 xlabel('$\frac{y}{b}$', 'FontSize', fs)
 ylabel('$C_l(y)\cdot c(y)\ [m]$', 'FontSize', fs)
 axis image
-yTicks = yticks;
-middleY = (max(yTicks) + min(yTicks))/2;
+yTick = yticks;
+middleY = (max(yTick) + min(yTick))/2;
 wing.PlotSelf('rotate', 'normalize', 'origin', [0, middleY]);
 hold off
 
@@ -268,8 +268,8 @@ title({'Moment coefficient of wing section', ...
 xlabel('$\frac{y}{b}$', 'FontSize', fs)
 ylabel('$C_{m,apex}(y)$', 'FontSize', fs)
 axis image
-yTicks = yticks;
-middleY = (max(yTicks) + min(yTicks))/2;
+yTick = yticks;
+middleY = (max(yTick) + min(yTick))/2;
 wing.PlotSelf('rotate', 'normalize', 'origin', [0, middleY]);
 hold off
 
@@ -284,8 +284,8 @@ title({'Moment coefficient of wing section about apex', ...
 xlabel('$\frac{y}{b}$', 'FontSize', fs)
 ylabel('$C_{m,apex}(y)\cdot c(y)^2\ [m^2]$', 'FontSize', fs)
 axis image
-yTicks = yticks;
-middleY = (max(yTicks) + min(yTicks))/2;
+yTick = yticks;
+middleY = (max(yTick) + min(yTick))/2;
 wing.PlotSelf('rotate', 'normalize', 'origin', [0, middleY]);
 hold off
 
@@ -348,38 +348,38 @@ if wing.N(1) == 20    % if there are enough tiles in the x direction
     subplot(2, 2, 1)
     hold on
     grid on
-    plot(x, deltaCpError.station2, 'LineWidth', lw)
+    plot(x, deltaCpError.station2*100, 'LineWidth', lw)
     title(strcat('Station $2$: $\frac{y}{0.5b}=', sprintf('%.3f$', ...
           kuethe.yStations(1)/(wing.span/2))), 'FontSize', fs-4);
     xlabel('$\frac{x}{c(y)}$', 'FontSize', fs-4)
-    ylabel('$\Delta C_p$ absolute errors', 'FontSize', fs-4)
+    ylabel({'$\Delta C_p$ absolute', 'errors $[\%]$'}, 'FontSize', fs-4)
     hold off
     subplot(2, 2, 2)
     hold on
     grid on
-    plot(x, deltaCpError.station4, 'LineWidth', lw)
+    plot(x, deltaCpError.station4*100, 'LineWidth', lw)
     title(strcat('Station $4$: $\frac{y}{0.5b}=', sprintf('%.3f$', ...
           kuethe.yStations(2)/(wing.span/2))), 'FontSize', fs-4);
     xlabel('$\frac{x}{c(y)}$', 'FontSize', fs-4)
-    ylabel('$\Delta C_p$ absolute errors', 'FontSize', fs-4)
+    ylabel({'$\Delta C_p$ absolute', 'errors $[\%]$'}, 'FontSize', fs-4)
     hold off
     subplot(2, 2, 3)
     hold on
     grid on
-    plot(x, deltaCpError.station6, 'LineWidth', lw)
+    plot(x, deltaCpError.station6*100, 'LineWidth', lw)
     title(strcat('Station $6$: $\frac{y}{0.5b}=', sprintf('%.3f$', ...
           kuethe.yStations(3)/(wing.span/2))), 'FontSize', fs-4);
     xlabel('$\frac{x}{c(y)}$', 'FontSize', fs-4)
-    ylabel('$\Delta C_p$ absolute errors', 'FontSize', fs-4)
+    ylabel({'$\Delta C_p$ absolute', 'errors $[\%]$'}, 'FontSize', fs-4)
     hold off
     subplot(2, 2, 4)
     hold on
     grid on
-    plot(x, deltaCpError.station8, 'LineWidth', lw)
+    plot(x, deltaCpError.station8*100, 'LineWidth', lw)
     title(strcat('Station $8$: $\frac{y}{0.5b}=', sprintf('%.3f$', ...
           kuethe.yStations(4)/(wing.span/2))), 'FontSize', fs-4);
     xlabel('$\frac{x}{c(y)}$', 'FontSize', fs-4)
-    ylabel('$\Delta C_p$ absolute errors', 'FontSize', fs-4)
+    ylabel({'$\Delta C_p$ absolute', 'errors $[\%]$'}, 'FontSize', fs-4)
     hold off
 end
 
