@@ -318,6 +318,7 @@ if wing.N(1) == 20    % if there are enough tiles in the x direction
           kuethe.yStations(2)/(wing.span/2))), 'FontSize', fs-4);
     xlabel('$\frac{x}{c(y)}$', 'FontSize', fs-4)
     ylabel('$\Delta C_p$', 'FontSize', fs-4)
+    legend('Calculation', 'Kuethe $\&$ Chow data')
     hold off
     subplot(2, 2, 3)
     hold on
