@@ -12,7 +12,6 @@ clear variables
 
 %% Parameters
 % user input
-% N = [20, 50];          % number of tiles used per side of wing for VLM
 N = 150;               % number of tiles used per side of wing for VLM
 uoo = 50;              % [m/s] - uniform flow speed
 rho = 1.225;           % [kg/m^3] - air density (chosen as ISA at sea level)
