@@ -179,9 +179,9 @@ grid on
 ARLinspace = linspace(min(AR), max(AR));
 LambdaLinspace = sweep(span(ARLinspace));
 eLinspace = Oswald(ARLinspace, LambdaLinspace);
-title('$c_{L,\alpha}$ comparison with theoretical results', 'FontSize', fs)
+title('$C_{L,\alpha}$ comparison with theoretical results', 'FontSize', fs)
 xlabel('$AR$', 'FontSize', fs)
-ylabel('$c_{L,\alpha}\ [\frac{1}{rad}]$', 'FontSize', fs)
+ylabel('$C_{L,\alpha}\ [\frac{1}{rad}]$', 'FontSize', fs)
 plot(ARLinspace, ...
      finite.cLAlphaFunc(LambdaLinspace, ARLinspace, eLinspace), ...
     'LineWidth', lw, 'Color', colors.green)
@@ -201,14 +201,14 @@ xticks(AR)
 ylim([0, 6])
 hold off
 
-% FIGURE 3: cDi comparison with theory
+% FIGURE 3: cDi/cL^2 comparison with theory
 figure
 hold on
 grid on
 cDicLSquared = 1./(pi*ARLinspace);
-title('$c_{D_i}$ comparison with theoretical results', 'FontSize', fs)
+title('$\frac{C_{D_i}}{C_L^2}$ comparison with theoretical results', 'FontSize', fs)
 xlabel('$AR$', 'FontSize', fs)
-ylabel('$c_{D_i}$', 'FontSize', fs)
+ylabel('$\frac{C_{D_i}}{C_L^2}$', 'FontSize', fs)
 plot(ARLinspace, cDicLSquared, ...
     'LineWidth', lw, 'Color', colors.blue)
 plot(AR, cDi./cL.^2, 'x', ...
