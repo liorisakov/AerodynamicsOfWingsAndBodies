@@ -31,14 +31,14 @@ uoo = M*a;               % [m/s] - uniform flow speed
 beta = sqrt(1 - M^2);    % [-]
 % missile
 r = d/2;                      % [m] - body radius
-RN = (lN^2 + rN^2)/(2*rN);    % [m] - radius of side of nosecone
-VN = pi * ...                 % [m^3] - volume of nosecone
-    integral(@(x) (sqrt(RN^2 - x.^2) - ...
-                  (RN - rN)).^2, -lN, 0);
 lN = 2.5*d;                   % [m] - length of nosecone
 rN = d/2;                     % [m] - body radius at interface with nosecone
 lW = 5.62*d;                  % [m] - lengthwise position of wing root chord
 lT = lW + 1.56*d + 3.95*d;    % [m] - lengthwise position of wing root chord
+RN = (lN^2 + rN^2)/(2*rN);    % [m] - radius of side of nosecone
+VN = pi * ...                 % [m^3] - volume of nosecone
+    integral(@(x) (sqrt(RN^2 - x.^2) - ...
+                  (RN - rN)).^2, -lN, 0);
 % wing
 wingChordLeadingEdges = [0, 0;
                          1.56*d, 1.06*d];
@@ -105,26 +105,22 @@ KBWFunc = @(tau) ((1 - tau.^2).^2 - ...
 cLAlphaNose = KN*cLAlphaWing;
 cLAlphaBody = cLAlphaNose;
 % partial configuration - body and wing
-KBWBodyWing = KBWFunc(r/sWing);
-KWBBodyWing = KWBFunc(r/sWing);
-cLAlphaBWBodyWing = KBWBodyWing*cLAlphaWing;
-cLAlphaWBBodyWing = KWBBodyWing*cLAlphaWing;
-cLAlphaBodyWing = cLAlphaNose + cLAlphaBWBodyWing + cLAlphaWBBodyWing;
+KBW = KBWFunc(r/sWing);
+KWB = KWBFunc(r/sWing);
+cLAlphaBW = KBW*cLAlphaWing;
+cLAlphaWB = KWB*cLAlphaWing;
+cLAlphaBodyWing = cLAlphaNose + cLAlphaBW + cLAlphaWB;
 % full configuration - body, wing and ttail
-KBWFull = KBWFunc(r/sWing);
-KWBFull = KWBFunc(r/sWing);
-KBTFull = KBWFunc(r/sTail);
-KTBFull = KWBFunc(r/sTail);
-cLAlphaBWFull = KBWFull*cLAlphaWing;
-cLAlphaWBFull = KWBFull*cLAlphaWing;
-cLAlphaBTFull = KBTFull*(tail.area/wing.area)*cLAlphaTail;
-cLAlphaTBFull = KTBFull*(tail.area/wing.area)*cLAlphaTail;
-cLAlphaTVFull = cLAlphaWing*cLAlphaTail*KWBFull*i*(sTail - r) / ...
+KBT = KBWFunc(r/sTail);
+KTB = KWBFunc(r/sTail);
+cLAlphaBT = KBT*(tail.area/wing.area)*cLAlphaTail;
+cLAlphaTB = KTB*(tail.area/wing.area)*cLAlphaTail;
+cLAlphaTV = cLAlphaWing*cLAlphaTail*KWB*i*(sTail - r) / ...
                 (2*pi*tail.aspectRatio*vortexRelativeToRoot);
 cLAlphaFull = cLAlphaNose + ...
-              cLAlphaBWFull + cLAlphaWBFull + ...
-              cLAlphaBTFull + cLAlphaTBFull + ...
-              cLAlphaTVFull;
+              cLAlphaBW + cLAlphaWB + ...
+              cLAlphaBT + cLAlphaTB + ...
+              cLAlphaTV;
 
 % centers of pressure - xBar/cR
 % wing
@@ -149,23 +145,23 @@ lBVBar = lBTBar;    % cLBV = 0 because gammaM = 0
 lBarBody = lNBar*cLAlphaNose/cLAlphaBody;
 % partial configuration - body and wing
 lBarBodyWing = (lNBar*cLAlphaNose + ...
-                lWBBar*cLAlphaWBBodyWing + ...
-                lBWBar*cLAlphaBWBodyWing) / ...
+                lWBBar*cLAlphaWB + ...
+                lBWBar*cLAlphaBW) / ...
                cLAlphaBodyWing;
 % full configuration - body, wing and tail
 lBarFull = (lNBar*cLAlphaNose + ...
-            lWBBar*cLAlphaWBFull + ...
-            lBWBar*cLAlphaBWFull + ...
-            lTBBar*cLAlphaTBFull + ...
-            lBTBar*cLAlphaBTFull +  ...
-            lTVBar*cLAlphaTVFull) / ...
+            lWBBar*cLAlphaWB + ...
+            lBWBar*cLAlphaBW + ...
+            lTBBar*cLAlphaTB + ...
+            lBTBar*cLAlphaBT +  ...
+            lTVBar*cLAlphaTV) / ...
            cLAlphaFull;
 
 %% Numerical results
 % given values, calculated numerically
 cLAlphaBodyGiven = 2.2;
 cLAlphaBodyWingGiven = 13.55;
-cLAlphaBodyWingTailGiven = 17.5;
+cLAlphaFullGiven = 17.5;
 lBarBodyGiven = 2.6*d;
 lBarBodyWingGiven = 5.8*d;
 lBarFullGiven = 7.2*d;
@@ -177,6 +173,90 @@ cLAlphaBodyCorrected = cLAlphaBody*normalizationRatio;
 cLAlphaBodyWingCorrected = cLAlphaBodyWing*normalizationRatio;
 cLAlphaFullCorrected = cLAlphaFull*normalizationRatio;
 
+% printed output
+fprintf('============================================================\n')
+fprintf('Nielsen method results for body, wing and tail configuration\n')
+fprintf('============================================================\n')
+fprintf('Setup parameters:\n')
+fprintf('-----------------\n')
+fprintf('Missile diameter: %d [m] (arbitrary)\n', d)
+fprintf('Mach number: %.0f\n', M)
+fprintf('Air temperature: %d [K]\n', T)
+fprintf('Resulting airspeed: %.1f [m/s]\n\n', uoo)
+fprintf('Method parameters:\n')
+fprintf('------------------\n')
+fprintf('(r/s)wing: %.4f\n', r/sWing)
+fprintf('(r/s)tail: %.4f\n', r/sTail)
+fprintf('Wing taper ratio: 0\n')
+fprintf('Tail taper ratio: %.4f\n', lambdaTail)
+fprintf('Wing effective aspect ratio: %.3f\n', AREffectiveWing)
+fprintf('Tail effective aspect ratio: %.3f\n', AREffectiveTail)
+fprintf('KN: %.4f\n', KN)
+fprintf('KW(B): %.3f\n', KWB)
+fprintf('KB(W): %.4f\n', KBW)
+fprintf('KB(T): %.4f\n', KBT)
+fprintf('KT(B): %.3f\n', KTB)
+fprintf('fw - rw: %.4f [m]\n', vortexRelativeToRoot)
+fprintf('h/s: 0\n')
+fprintf('(xBar/Cr)W(B): %.4f\n', xBarCRWB)
+fprintf('(xBar/Cr)B(W): %.4f\n', xBarCRBW)
+fprintf('(xBar/Cr)T(B): %.4f\n', xBarCRTB)
+fprintf('(xBar/Cr)B(T): %.4f\n\n', xBarCRTB)
+fprintf('Component lift line slopes:\n')
+fprintf('---------------------------\n')
+fprintf('CLAlphaN: %.4f\n', cLAlphaNose)
+fprintf('CLAlphaWB: %.3f\n', cLAlphaWB)
+fprintf('CLAlphaBW: %.3f\n', cLAlphaBW)
+fprintf('CLAlphaTB: %.3f\n', cLAlphaTB)
+fprintf('CLAlphaBT: %.3f\n', cLAlphaBT)
+fprintf('CLAlphaTV: %.3f\n', cLAlphaTV)
+fprintf('CLAlphaBV: 0\n\n')
+fprintf('Component centers of pressure:\n')
+fprintf('------------------------------\n')
+fprintf('lNBar: %.3f\n', lNBar)
+fprintf('lWBBar: %.3f\n', lWBBar)
+fprintf('lBWBar: %.3f\n', lBWBar)
+fprintf('lTBBar: %.2f\n', lTBBar)
+fprintf('lBTBar: %.2f\n', lBTBar)
+fprintf('lTVBar: %.2f\n', lTVBar)
+fprintf('lBVBar: %.2f\n\n', lBVBar)
+fprintf('Lift line slopes per configuration:\n')
+fprintf('-----------------------------------\n')
+fprintf('Result correction factor: %.3f\n', normalizationRatio)
+fprintf('Body only configuration\n')
+fprintf('Calculation: %.3f\n', cLAlphaBodyCorrected)
+fprintf('Given: %.3f\n', cLAlphaBodyGiven)
+fprintf('Error: %.3f [%%]\n\n', ...
+        abs(cLAlphaBodyCorrected - cLAlphaBodyGiven)/cLAlphaBodyGiven*100);
+fprintf('Body and wing configuration\n')
+fprintf('Calculation: %.3f\n', cLAlphaBodyWingCorrected)
+fprintf('Given: %.3f\n', cLAlphaBodyWingGiven)
+fprintf('Error: %.3f [%%]\n\n', ...
+        abs(cLAlphaBodyWingCorrected - cLAlphaBodyWingGiven) / ...
+        cLAlphaBodyWingGiven*100);
+fprintf('Full configuration\n')
+fprintf('Calculation: %.3f\n', cLAlphaFullCorrected)
+fprintf('Given: %.3f\n', cLAlphaFullGiven)
+fprintf('Error: %.3f [%%]\n\n', ...
+        abs(cLAlphaFullCorrected - cLAlphaFullGiven)/cLAlphaFullGiven*100);
+fprintf('Centers of pressure per configuration:\n')
+fprintf('--------------------------------------\n')
+fprintf('Body only configuration\n')
+fprintf('Calculation: %.3f\n', lBarBody)
+fprintf('Given: %.3f\n', lBarBodyGiven)
+fprintf('Error: %.3f [%%]\n\n', ...
+        abs(lBarBody - lBarBodyGiven)/lBarBodyGiven*100)
+fprintf('Body and wing configuration\n')
+fprintf('Calculation: %.3f\n', lBarBodyWing)
+fprintf('Given: %.3f\n', lBarBodyWingGiven)
+fprintf('Error: %.3f [%%]\n\n', ...
+        abs(lBarBodyWing - lBarBodyWingGiven)/lBarBodyWingGiven*100)
+fprintf('Full configuration\n')
+fprintf('Full configuration: %.3f\n', lBarFull)
+fprintf('Given full configuration: %.3f\n', lBarFullGiven)
+fprintf('Error: %.3f [%%]\n\n', ...
+        abs(lBarFull - lBarFullGiven)/lBarFullGiven*100)
+    
 %% Plots
 % plot parameters
 lw = 1.2;    % line width
@@ -198,4 +278,3 @@ zticklabels({'Wing', 'Tail'})
 view(-68, 27)
 axis image
 hold off
-
